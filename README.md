@@ -73,6 +73,31 @@ When you want to forcefully reload, for example to reset the state of your app, 
 - **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
 - **iOS**: Press <kbd>R</kbd> in iOS Simulator.
 
+## 🌐 Integrasi React Native for Web (Manual Setup)
+
+Project ini telah diintegrasikan dengan **React Native for Web** secara manual untuk mendukung platform browser (Web-based) menggunakan **Webpack 5** dan disesuaikan dengan arsitektur **React 19 / React Native 0.87+**.
+
+### 🛠️ Fitur & Konfigurasi yang Diterapkan
+1. **Entry Point Terpisah:** Menggunakan `index.web.js` khusus untuk inisialisasi rendering Web berbasis `createRoot` (React 19).
+2. **Bundler Webpack 5:** Konfigurasi `webpack.config.js` dengan fitur *aliasing* (`react-native` ke `react-native-web`) serta isolasi ketat paket agar terhindar dari error *CommonJS* (`require is not defined`).
+3. **Babel Smart Sync:** Modifikasi `babel.config.js` menggunakan flag `disableImportExportTransform` untuk menonaktifkan konversi modul server ketika aplikasi di-build untuk lingkungan web.
+4. **Sinkronisasi Versi:** Memastikan `react` dan `react-dom` terkunci pada versi yang sama (`19.2.3`) guna menghindari kendala *Version Mismatch*.
+
+### 🚀 Cara Menjalankan di Lingkungan Web
+
+Pastikan dependensi web telah terpasang, kemudian jalankan perintah berikut:
+
+```bash
+# Menjalankan server development web (Port: 8085)
+npm run web
+
+# Membuat build produksi untuk deployment web
+npm run build:web
+```
+
+Aplikasi web dapat diakses melalui browser di alamat [http://localhost:8085](http://localhost:8085).
+
+
 ## Congratulations! :tada:
 
 You've successfully run and modified your React Native App. :partying_face:
