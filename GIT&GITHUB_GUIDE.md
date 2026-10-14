@@ -66,7 +66,7 @@ Gunakan draf di bawah ini untuk membuat *Issues* baru langsung di menu **Issues*
 
 ### 👤 Anggota Tim 1: Developer IoT Hardware (Layer 1 \& 2)
 
-* **Judul Issue:** `feat(hardware): Konfigurasi ESP32, Sensor XKC-Y25-V, dan Protokol MQTTS`
+* **Judul Issue:** `feat(hardware): Konfigurasi ESP32, Sensor XKC-Y25-V, dan Protokol MQTTS (opsional) `
 * **Deskripsi Issue:**
 
 ```markdown
