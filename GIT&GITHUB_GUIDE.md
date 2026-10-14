@@ -43,7 +43,7 @@ git checkout -b feature/nama-tugas-anda
 Setelah selesai mengetik atau mengubah kode di VS Code, jalankan ritual 4 perintah ini untuk mengirim hasil kerja Anda ke awan GitHub:
 
 ```bash
-# 1. Cek file apa saja yang telah Anda ubah
+# 1. Cek file apa saja yang telah Anda ubah yaa
 git status
 
 # 2. Bungkus semua file yang diubah untuk bersiap disimpan
