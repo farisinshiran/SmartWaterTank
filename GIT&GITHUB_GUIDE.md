@@ -43,7 +43,7 @@ git checkout -b feature/nama-tugas-anda
 Setelah selesai mengetik atau mengubah kode di VS Code, jalankan ritual 4 perintah ini untuk mengirim hasil kerja Anda ke awan GitHub:
 
 ```bash
-# 1. Cek file apa saja yang telah Anda ubah
+# 1. Cek file apa saja yang telah Anda ubah yaa
 git status
 
 # 2. Bungkus semua file yang diubah untuk bersiap disimpan
@@ -66,7 +66,7 @@ Gunakan draf di bawah ini untuk membuat *Issues* baru langsung di menu **Issues*
 
 ### 👤 Anggota Tim 1: Developer IoT Hardware (Layer 1 \& 2)
 
-* **Judul Issue:** `feat(hardware): Konfigurasi ESP32, Sensor XKC-Y25-V, dan Protokol MQTTS`
+* **Judul Issue:** `feat(hardware): Konfigurasi ESP32, Sensor XKC-Y25-V, dan Protokol MQTTS (opsional) Perlu dikaji apakah perlu MQTT atau tidak? lalu apa bedanya `
 * **Deskripsi Issue:**
 
 ```markdown
