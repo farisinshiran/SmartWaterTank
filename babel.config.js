@@ -1,8 +1,6 @@
 module.exports = function (api) {
-  api.cache(true);
-
-  // Mendeteksi apakah proses build saat ini ditujukan untuk kebutuhan Web
-  const isWeb = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production';
+  // Webpack explicitly selects the "web" Babel environment; native builds keep module transforms enabled.
+  const isWeb = api.env() === 'web';
 
   return {
     presets: [

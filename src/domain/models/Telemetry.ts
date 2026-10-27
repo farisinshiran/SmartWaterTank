@@ -6,7 +6,8 @@
 export interface TelemetryLog {
   id: string;
   tankId: string;
-  sensor50Percent: boolean;
+  sensor20Percent: boolean;
+  legacySensor50Percent?: boolean;
   sensor90Percent: boolean;
   pumpStatusRead: 'ON' | 'OFF';
   timestamp: number;
@@ -15,7 +16,8 @@ export interface TelemetryLog {
 export interface TelemetryDisplay {
   id: string;
   tankId: string;
-  sensor50Percent: boolean;
+  sensor20Percent: boolean;
+  legacySensor50Percent?: boolean;
   sensor90Percent: boolean;
   pumpStatusRead: 'ON' | 'OFF';
   timestamp: Date;

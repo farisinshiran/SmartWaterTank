@@ -7,17 +7,30 @@
  */
 
 import { Platform } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
+import {
+  AuthorizationStatus,
+  getInitialNotification as getInitialRemoteNotification,
+  getMessaging,
+  getToken,
+  onMessage,
+  requestPermission,
+  setBackgroundMessageHandler as registerBackgroundMessageHandler,
+  subscribeToTopic as subscribe,
+  unsubscribeFromTopic as unsubscribe,
+  type RemoteMessage,
+} from '@react-native-firebase/messaging';
+
+const messagingInstance = getMessaging();
 
 /**
  * Request permission for push notifications
  */
 export async function requestNotificationPermission(): Promise<boolean> {
   try {
-    const authStatus = await messaging().requestPermission();
+    const authStatus = await requestPermission(messagingInstance);
     const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL;
     
     return enabled;
   } catch (error) {
@@ -31,7 +44,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
  */
 export async function getFCMToken(): Promise<string | null> {
   try {
-    const token = await messaging().getToken();
+    const token = await getToken(messagingInstance);
     return token;
   } catch (error) {
     console.error('Failed to get FCM token:', error);
@@ -44,7 +57,7 @@ export async function getFCMToken(): Promise<string | null> {
  */
 export async function subscribeToTopic(topic: string): Promise<boolean> {
   try {
-    await messaging().subscribeToTopic(topic);
+    await subscribe(messagingInstance, topic);
     return true;
   } catch (error) {
     console.error(`Failed to subscribe to topic ${topic}:`, error);
@@ -57,7 +70,7 @@ export async function subscribeToTopic(topic: string): Promise<boolean> {
  */
 export async function unsubscribeFromTopic(topic: string): Promise<boolean> {
   try {
-    await messaging().unsubscribeFromTopic(topic);
+    await unsubscribe(messagingInstance, topic);
     return true;
   } catch (error) {
     console.error(`Failed to unsubscribe from topic ${topic}:`, error);
@@ -69,9 +82,9 @@ export async function unsubscribeFromTopic(topic: string): Promise<boolean> {
  * Handle foreground message
  */
 export function onForegroundMessage(
-  callback: (message: any) => void
+  callback: (message: RemoteMessage) => void
 ): () => void {
-  return messaging().onMessage(async (remoteMessage) => {
+  return onMessage(messagingInstance, async (remoteMessage) => {
     callback(remoteMessage);
   });
 }
@@ -80,7 +93,7 @@ export function onForegroundMessage(
  * Handle background message (must be registered in App.tsx)
  */
 export function setBackgroundMessageHandler(): void {
-  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  registerBackgroundMessageHandler(messagingInstance, async (remoteMessage) => {
     console.log('Background message:', remoteMessage);
   });
 }
@@ -98,7 +111,7 @@ export async function isInBackground(): Promise<boolean> {
  */
 export async function getInitialNotification(): Promise<any | null> {
   try {
-    const remoteMessage = await messaging().getInitialNotification();
+    const remoteMessage = await getInitialRemoteNotification(messagingInstance);
     return remoteMessage;
   } catch (error) {
     console.error('Failed to get initial notification:', error);

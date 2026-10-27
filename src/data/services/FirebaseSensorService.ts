@@ -33,7 +33,7 @@ export function subscribeToSensorData(
   const handler = (snapshot: DataSnapshot) => {
     const data = snapshot.val();
     callback({
-      sensor50Percent: data?.sensor50Percent ?? false,
+      sensor20Percent: data?.sensor20Percent ?? false,
       sensor90Percent: data?.sensor90Percent ?? false,
       pumpStatusRead: data?.pumpStatusRead ?? 'OFF',
       lastUpdate: data?.lastUpdate ?? 0,
@@ -50,7 +50,7 @@ export function subscribeToSensorData(
  */
 export function writeSensorData(tankId: string, data: SensorData): Promise<void> {
   return set(getSensorRef(tankId), {
-    sensor50Percent: data.sensor50Percent,
+    sensor20Percent: data.sensor20Percent,
     sensor90Percent: data.sensor90Percent,
     pumpStatusRead: data.pumpStatusRead,
     lastUpdate: data.lastUpdate ?? Date.now(),

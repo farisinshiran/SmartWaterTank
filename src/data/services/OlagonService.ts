@@ -152,7 +152,7 @@ export async function analyzeSensorData(
     endpoint: '/analyze/sensors',
     method: 'POST',
     body: {
-      sensor50Percent: sensor50,
+      sensor20Percent: sensor50,
       sensor90Percent: sensor90,
       pumpStatus,
     },

@@ -1,0 +1,197 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Data model:
+    // telemetry_logs/{id}: tankId, sensor20Percent, sensor90Percent,
+    //   pumpStatusRead, createdAt. ESP32 writes; clients read as tank members.
+    // tank_members/{tankId}/members/{uid}: active, isManager. Admin-managed.
+    // alarm_settings/{tankId}: enabled, fixed thresholds/timers, updatedBy,
+    //   updatedAt. Admin-created; members may change only enabled.
+    // alarm_states/{tankId}, alarm_incidents/{id}: server-only alarm state.
+    // user_notifications/{uid}/items/{id}: server-created; owner may read and
+    //   move NEW -> READ/ACKNOWLEDGED or READ -> ACKNOWLEDGED.
+    // users/{uid}/devices/{deviceId}: owner-managed FCM token and platform.
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() &&
+        'ownerUid' in resource.data &&
+        request.auth.uid == resource.data.ownerUid;
+    }
+
+    function uidUnchanged(data) {
+      return !('ownerUid' in data) || data.ownerUid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('ownerUid' in request.resource.data) ||
+        request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(data, fields) {
+      return data.keys().hasOnly(fields);
+    }
+
+    function isMember(tankId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/tank_members/$(tankId)/members/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/tank_members/$(tankId)/members/$(request.auth.uid)).data.active == true;
+    }
+
+    function isValidTelemetry(data) {
+      return hasRequiredFields(data, [
+          'tankId', 'sensor20Percent', 'sensor90Percent', 'pumpStatusRead', 'createdAt'
+        ]) &&
+        hasOnlyAllowedFields(data, [
+          'tankId', 'sensor20Percent', 'sensor90Percent', 'pumpStatusRead', 'createdAt'
+        ]) &&
+        data.tankId is string && data.tankId.size() > 0 && data.tankId.size() <= 100 &&
+        data.sensor20Percent is bool &&
+        data.sensor90Percent is bool &&
+        data.pumpStatusRead in ['ON', 'OFF'] &&
+        data.createdAt is timestamp &&
+        data.createdAt <= request.time;
+    }
+
+    function isValidAlarmSettings(data) {
+      return hasRequiredFields(data, [
+          'enabled', 'lowThresholdPercent', 'highThresholdPercent',
+          'lowDurationSeconds', 'sensorTimeoutSeconds', 'criticalRepeatMinutes',
+          'updatedBy', 'updatedAt'
+        ]) &&
+        hasOnlyAllowedFields(data, [
+          'enabled', 'lowThresholdPercent', 'highThresholdPercent',
+          'lowDurationSeconds', 'sensorTimeoutSeconds', 'criticalRepeatMinutes',
+          'updatedBy', 'updatedAt'
+        ]) &&
+        data.enabled is bool &&
+        data.lowThresholdPercent == 20 &&
+        data.highThresholdPercent == 90 &&
+        data.lowDurationSeconds == 120 &&
+        data.sensorTimeoutSeconds == 300 &&
+        data.criticalRepeatMinutes == 15 &&
+        data.updatedBy is string && data.updatedBy.size() > 0 && data.updatedBy.size() <= 128 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidDevice(data) {
+      return hasRequiredFields(data, ['ownerUid', 'token', 'platform', 'enabled', 'updatedAt']) &&
+        hasOnlyAllowedFields(data, ['ownerUid', 'token', 'platform', 'enabled', 'updatedAt']) &&
+        data.ownerUid is string && data.ownerUid.size() > 0 && data.ownerUid.size() <= 128 &&
+        data.token is string && data.token.size() >= 20 && data.token.size() <= 4096 &&
+        data.platform in ['android', 'ios', 'web'] &&
+        data.enabled is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidNotification(data) {
+      return hasRequiredFields(data, [
+          'incidentId', 'tankId', 'type', 'severity', 'title', 'body',
+          'status', 'active', 'createdAt'
+        ]) &&
+        hasOnlyAllowedFields(data, [
+          'incidentId', 'tankId', 'type', 'severity', 'title', 'body',
+          'status', 'active', 'createdAt', 'resolvedAt', 'readAt',
+          'acknowledgedAt', 'nextRepeatAt'
+        ]) &&
+        data.incidentId is string && data.incidentId.size() > 0 && data.incidentId.size() <= 150 &&
+        data.tankId is string && data.tankId.size() > 0 && data.tankId.size() <= 100 &&
+        data.type in ['TEST', 'LOW_LEVEL', 'OVERFLOW', 'SENSOR_OFFLINE'] &&
+        data.severity in ['INFO', 'WARNING', 'CRITICAL'] &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+        data.body is string && data.body.size() <= 1000 &&
+        data.status in ['NEW', 'READ', 'ACKNOWLEDGED', 'RESOLVED'] &&
+        data.active is bool &&
+        data.createdAt is timestamp &&
+        (!('resolvedAt' in data) || data.resolvedAt is timestamp) &&
+        (!('readAt' in data) || data.readAt is timestamp) &&
+        (!('acknowledgedAt' in data) || data.acknowledgedAt is timestamp) &&
+        (!('nextRepeatAt' in data) || data.nextRepeatAt == null || data.nextRepeatAt is timestamp);
+    }
+
+    function validNotificationTransition() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return isValidNotification(request.resource.data) &&
+        changed.hasOnly(['status', 'readAt', 'acknowledgedAt']) &&
+        (
+          (
+            resource.data.status == 'NEW' &&
+            request.resource.data.status == 'READ' &&
+            changed.hasOnly(['status', 'readAt']) &&
+            request.resource.data.readAt == request.time
+          ) ||
+          (
+            resource.data.status in ['NEW', 'READ'] &&
+            request.resource.data.status == 'ACKNOWLEDGED' &&
+            changed.hasOnly(['status', 'acknowledgedAt']) &&
+            request.resource.data.acknowledgedAt == request.time
+          )
+        );
+    }
+
+    match /telemetry_logs/{documentId} {
+      allow read: if isMember(resource.data.tankId);
+      allow create: if isAuthenticated() && isValidTelemetry(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /tank_members/{tankId}/members/{userId} {
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if false;
+    }
+
+    match /alarm_settings/{tankId} {
+      allow get: if isMember(tankId);
+      allow list, create, delete: if false;
+      allow update: if isMember(tankId) &&
+        isValidAlarmSettings(request.resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['enabled', 'updatedBy', 'updatedAt']) &&
+        request.resource.data.lowThresholdPercent == resource.data.lowThresholdPercent &&
+        request.resource.data.highThresholdPercent == resource.data.highThresholdPercent &&
+        request.resource.data.lowDurationSeconds == resource.data.lowDurationSeconds &&
+        request.resource.data.sensorTimeoutSeconds == resource.data.sensorTimeoutSeconds &&
+        request.resource.data.criticalRepeatMinutes == resource.data.criticalRepeatMinutes &&
+        request.resource.data.updatedBy == request.auth.uid &&
+        request.resource.data.updatedAt == request.time;
+    }
+
+    match /users/{userId}/devices/{deviceId} {
+      allow read, delete: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+        uidUnchanged(request.resource.data) &&
+        request.resource.data.ownerUid == userId &&
+        isValidDevice(request.resource.data);
+      allow update: if isOwner(userId) &&
+        isDocOwner() &&
+        uidNotModified() &&
+        isValidDevice(request.resource.data) &&
+        request.resource.data.ownerUid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['token', 'platform', 'enabled', 'updatedAt']) &&
+        request.resource.data.updatedAt == request.time;
+    }
+
+    match /user_notifications/{userId}/items/{notificationId} {
+      allow read: if isOwner(userId);
+      allow create, delete: if false;
+      allow update: if isOwner(userId) && validNotificationTransition();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -16,16 +16,16 @@ import {
  * Calculate water level based on sensor readings
  */
 export function calculateWaterLevel(
-  sensor50Percent: boolean,
+  sensor20Percent: boolean,
   sensor90Percent: boolean
 ): WaterLevel {
-  if (!sensor50Percent && !sensor90Percent) {
+  if (!sensor20Percent && !sensor90Percent) {
     return 'EMPTY';
   }
-  if (sensor50Percent && !sensor90Percent) {
+  if (sensor20Percent && !sensor90Percent) {
     return 'MEDIUM';
   }
-  if (sensor50Percent && sensor90Percent) {
+  if (sensor20Percent && sensor90Percent) {
     return 'FULL';
   }
   return 'LOW';
@@ -35,32 +35,32 @@ export function calculateWaterLevel(
  * Get water level percentage (0-100)
  */
 export function getWaterLevelPercentage(
-  sensor50Percent: boolean,
+  sensor20Percent: boolean,
   sensor90Percent: boolean
 ): number {
-  if (!sensor50Percent && !sensor90Percent) {
-    return 0;
+  if (!sensor20Percent && !sensor90Percent) {
+    return 10;
   }
-  if (sensor50Percent && !sensor90Percent) {
-    return 65;
+  if (sensor20Percent && !sensor90Percent) {
+    return 20;
   }
-  if (sensor50Percent && sensor90Percent) {
+  if (sensor20Percent && sensor90Percent) {
     return 90;
   }
-  return 15;
+  return 10;
 }
 
 /**
  * Get full water level information
  */
 export function getWaterLevelInfo(
-  sensor50Percent: boolean,
+  sensor20Percent: boolean,
   sensor90Percent: boolean
 ): WaterLevelInfo {
-  const level = calculateWaterLevel(sensor50Percent, sensor90Percent);
+  const level = calculateWaterLevel(sensor20Percent, sensor90Percent);
   return {
     level,
-    percentage: getWaterLevelPercentage(sensor50Percent, sensor90Percent),
+    percentage: getWaterLevelPercentage(sensor20Percent, sensor90Percent),
     color: WATER_LEVEL_COLORS[level],
     label: WATER_LEVEL_LABELS[level],
   };
@@ -70,7 +70,7 @@ export function getWaterLevelInfo(
  * Check if current state represents critical overflow condition
  */
 export function isCriticalOverflow(
-  sensor50Percent: boolean,
+  sensor20Percent: boolean,
   sensor90Percent: boolean,
   pumpStatusRead: 'ON' | 'OFF'
 ): boolean {

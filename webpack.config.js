@@ -1,6 +1,7 @@
 ﻿const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   // 1. Memaksa output berjalan murni pada standar web browser
@@ -31,7 +32,9 @@ module.exports = {
         ],
         use: {
           loader: 'babel-loader',
-          // Pengaturan preset diserahkan sepenuhnya ke babel.config.js
+          options: {
+            envName: 'web',
+          },
         },
       },
       {
@@ -53,6 +56,14 @@ module.exports = {
   },
 
   plugins: [
+    new CopyPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, 'public/firebase-messaging-sw.js'),
+          to: 'firebase-messaging-sw.js',
+        },
+      ],
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'public/index.html'),
     }),

@@ -32,7 +32,7 @@ export function subscribeToTelemetryLogs(
       const logs: TelemetryLog[] = Object.entries(data).map(([key, value]: [string, any]) => ({
         id: key,
         tankId,
-        sensor50Percent: value.sensor50Percent ?? false,
+        sensor20Percent: value.sensor20Percent ?? false,
         sensor90Percent: value.sensor90Percent ?? false,
         pumpStatusRead: value.pumpStatusRead ?? 'OFF',
         timestamp: value.timestamp || 0,
@@ -53,7 +53,7 @@ export function subscribeToTelemetryLogs(
  */
 export function pushTelemetryLog(
   tankId: string,
-  sensor50Percent: boolean,
+  sensor20Percent: boolean,
   sensor90Percent: boolean,
   pumpStatusRead: 'ON' | 'OFF'
 ): Promise<string> {
@@ -62,7 +62,7 @@ export function pushTelemetryLog(
   
   return newLogRef.then((ref) => {
     return set(ref, {
-      sensor50Percent,
+      sensor20Percent,
       sensor90Percent,
       pumpStatusRead,
       timestamp: Date.now(),
@@ -87,7 +87,7 @@ export function subscribeToLatestTelemetryLog(
       callback({
         id: key,
         tankId,
-        sensor50Percent: value.sensor50Percent ?? false,
+        sensor20Percent: value.sensor20Percent ?? false,
         sensor90Percent: value.sensor90Percent ?? false,
         pumpStatusRead: value.pumpStatusRead ?? 'OFF',
         timestamp: value.timestamp || 0,

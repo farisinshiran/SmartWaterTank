@@ -1,28 +1,13 @@
-import messaging from '@react-native-firebase/messaging';
-import { Platform } from 'react-native';
+import {
+  getFCMToken as fetchFCMToken,
+  requestNotificationPermission,
+} from '../services/FCMService';
 
-export const requestUserPermission = async () => {
-  if (Platform.OS === 'ios') {
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-    return enabled;
-  } else if (Platform.OS === 'android') {
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-    return enabled;
-  }
-  return false;
-};
+export const requestUserPermission = requestNotificationPermission;
 
 export const getFCMToken = async () => {
   try {
-    const token = await messaging().getToken();
+    const token = await fetchFCMToken();
     console.log('FCM Token:', token);
     return token;
   } catch (error) {

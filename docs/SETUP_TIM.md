@@ -140,7 +140,70 @@ Kompatibilitas Android Emulator resmi pada host Windows ARM64 belum dipastikan d
    - Di laptop Refo, jalankan `npx react-native start` dari root repo, lalu pada terminal lain jalankan `adb reverse tcp:8081 tcp:8081`.
    - Perubahan JavaScript/TypeScript dapat dimuat dari Metro Refo. Build native perlu diulang jika ada perubahan paket native, misalnya menambah Notifee; build tersebut dapat dilakukan oleh Fajri.
 
-## F. Masalah umum
+## F. Membuat bundle dan artifact Android
+
+Jalankan perintah dari root repo, kecuali jika ada `Set-Location android` di contoh. `reactNativeArchitectures` menentukan ABI Android yang dimasukkan ke hasil build, bukan arsitektur CPU laptop.
+
+### 1. APK debug untuk pengujian
+
+APK debug terhubung ke Metro dan bukan paket mandiri. Jalankan Metro di terminal terpisah sebelum membuka aplikasi.
+
+- **Fajri (Windows Intel):** sertakan ABI HP Android 64-bit dan emulator x64:
+
+  ```powershell
+  Set-Location C:\src\SmartWaterTank\android
+  .\gradlew.bat app:assembleDebug -PreactNativeArchitectures=arm64-v8a,x86_64
+  ```
+
+- **Refo (Windows ARM64):** untuk pengujian pada HP Android ARM64, build ABI tersebut saja agar build native tidak mengerjakan target emulator yang tidak dipakai:
+
+  ```powershell
+  Set-Location C:\src\SmartWaterTank\android
+  .\gradlew.bat app:assembleDebug -PreactNativeArchitectures=arm64-v8a
+  ```
+
+APK dibuat di `android\app\build\outputs\apk\debug\app-debug.apk`. Dari root repo, pasang pada HP dengan:
+
+```powershell
+adb install -r .\android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+Jika build native gagal di Windows ARM64, gunakan APK yang dibuat Fajri seperti langkah E; Metro tetap dijalankan dari laptop yang terhubung ke HP.
+
+### 2. AAB release
+
+AAB release menyertakan JavaScript bundle dan tidak memerlukan Metro saat aplikasi berjalan. Untuk menghasilkan AAB yang mencakup ABI yang dikonfigurasi repo, disarankan build dari laptop Fajri (Windows Intel):
+
+```powershell
+Set-Location C:\src\SmartWaterTank\android
+.\gradlew.bat app:bundleRelease
+```
+
+File dibuat di `android\app\build\outputs\bundle\release\app-release.aab`. Untuk menguji AAB pada perangkat, gunakan bundletool atau Google Play internal testing; AAB bukan file yang dapat dipasang langsung dengan `adb install`.
+
+Refo dapat mencoba build AAB yang hanya menargetkan HP ARM64:
+
+```powershell
+Set-Location C:\src\SmartWaterTank\android
+.\gradlew.bat app:bundleRelease -PreactNativeArchitectures=arm64-v8a
+```
+
+AAB tersebut tidak mencakup ABI lain. Jika NDK/CMake gagal pada host ARM64, lakukan release build di laptop Fajri.
+
+**Penting:** konfigurasi `release` di `android/app/build.gradle` saat ini masih menandatangani dengan debug keystore. Hasilnya hanya untuk pengujian internal; sebelum distribusi ke Play Store, tim harus mengonfigurasi keystore dan signing release yang resmi.
+
+### 3. Membuat JavaScript bundle secara terpisah
+
+Bundle JavaScript tidak bergantung pada arsitektur laptop. Perintah ini menghasilkan bundle produksi untuk pemeriksaan atau kebutuhan pengembangan; bundle saja bukan APK/AAB dan tidak dapat dipasang di HP.
+
+```powershell
+New-Item -ItemType Directory -Force android\app\build\outputs\bundle\assets
+npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android\app\build\outputs\bundle\index.android.bundle --assets-dest android\app\build\outputs\bundle\assets
+```
+
+Untuk APK/AAB release, cukup jalankan task Gradle di atas karena React Native Gradle Plugin membuat dan memasukkan JavaScript bundle secara otomatis.
+
+## G. Masalah umum
 
 | Gejala | Solusi |
 | --- | --- |

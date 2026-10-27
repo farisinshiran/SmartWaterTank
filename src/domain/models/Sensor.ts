@@ -4,7 +4,8 @@
  */
 
 export interface SensorData {
-  sensor50Percent: boolean;
+  sensor20Percent: boolean;
+  legacySensor50Percent?: boolean;
   sensor90Percent: boolean;
   pumpStatusRead: 'ON' | 'OFF';
   lastUpdate?: number;
@@ -12,7 +13,8 @@ export interface SensorData {
 
 export interface SensorState {
   sensor90Percent: boolean;
-  sensor50Percent: boolean;
+  sensor20Percent: boolean;
+  legacySensor50Percent?: boolean;
   pumpStatusRead: 'ON' | 'OFF';
 }
 
